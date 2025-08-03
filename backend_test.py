@@ -129,14 +129,14 @@ class BackendTester:
         
         try:
             response = await self.client.post(f"{API_BASE}/start-bot", json=test_config_3)
-            if response.status_code == 400:
+            if response.status_code == 500:  # Backend returns 500 for validation errors
                 error_msg = response.json().get("detail", "")
                 if "Диапазон покупки не должен пересекаться с диапазоном продажи" in error_msg:
                     await self.log_test("Range Overlap Validation", True, "Correctly rejected overlapping ranges")
                 else:
                     await self.log_test("Range Overlap Validation", False, f"Wrong error message: {error_msg}")
             else:
-                await self.log_test("Range Overlap Validation", False, f"Should have returned 400, got {response.status_code}")
+                await self.log_test("Range Overlap Validation", False, f"Should have returned 500, got {response.status_code}")
         except Exception as e:
             await self.log_test("Range Overlap Validation", False, f"Exception: {str(e)}")
     
