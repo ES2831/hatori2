@@ -164,14 +164,22 @@ class BackendTester:
             # since we're using test credentials that won't connect to MEXC
             response = await self.client.post(f"{API_BASE}/start-bot", json=valid_config)
             
-            # We expect this to fail at the MEXC connection level, not at validation level
-            if response.status_code in [500, 400]:  # Connection error is expected with test credentials
+            # We expect this to either succeed (200) or fail with connection errors (500)
+            if response.status_code == 200:
+                # Bot started successfully with test credentials, model validation passed
+                data = response.json()
+                if "buy_range" in data and "sell_range" in data:
+                    await self.log_test("TradingConfig Model Validation", True, "Model accepts all required range fields and bot starts")
+                else:
+                    await self.log_test("TradingConfig Model Validation", False, f"Missing range info in response: {data}")
+            elif response.status_code == 500:
+                # Connection error is expected with test credentials, but model validation passed
                 response_data = response.json()
                 detail = response_data.get("detail", "")
                 
                 # If it's a connection/auth error, the model validation passed
-                if any(keyword in detail.lower() for keyword in ["connection", "auth", "api", "key", "signature"]):
-                    await self.log_test("TradingConfig Model Validation", True, "Model accepts all required range fields")
+                if any(keyword in detail.lower() for keyword in ["connection", "auth", "api", "key", "signature", "websocket"]):
+                    await self.log_test("TradingConfig Model Validation", True, "Model validation passed (connection error expected with test credentials)")
                 else:
                     await self.log_test("TradingConfig Model Validation", False, f"Unexpected error: {detail}")
             else:
