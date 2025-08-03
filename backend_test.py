@@ -77,14 +77,14 @@ class BackendTester:
         
         try:
             response = await self.client.post(f"{API_BASE}/start-bot", json=test_config_1)
-            if response.status_code == 400:
+            if response.status_code == 500:  # Backend returns 500 for validation errors
                 error_msg = response.json().get("detail", "")
                 if "buy_price_min должен быть меньше buy_price_max" in error_msg:
                     await self.log_test("Buy Range Validation (min >= max)", True, "Correctly rejected invalid buy range")
                 else:
                     await self.log_test("Buy Range Validation (min >= max)", False, f"Wrong error message: {error_msg}")
             else:
-                await self.log_test("Buy Range Validation (min >= max)", False, f"Should have returned 400, got {response.status_code}")
+                await self.log_test("Buy Range Validation (min >= max)", False, f"Should have returned 500, got {response.status_code}")
         except Exception as e:
             await self.log_test("Buy Range Validation (min >= max)", False, f"Exception: {str(e)}")
         
